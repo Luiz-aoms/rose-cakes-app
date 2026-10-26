@@ -30,3 +30,14 @@ Data: a preencher. Participantes: a preencher. Dispositivo: a preencher.
 Para cada tarefa registre: concluída sem ajuda / com ajuda / não concluída; tempo; erro observado; sugestão; prioridade de correção. Registre autorização da parceira para fotos ou depoimentos antes de utilizá-los no relatório/banner.
 
 Critério proposto de aprovação: concluir autonomamente cadastro, venda e leitura do relatório, com valores corretos. A aprovação depende da sessão real e dos ajustes identificados.
+
+## Novos cenários do protótipo local
+
+- Criar encomenda para cliente com prazo, retirada/entrega e sinal; conferir total, recebido e saldo.
+- Alterar a etapa de produção sem alterar os recebimentos.
+- Registrar pagamento posterior e conferir saldo zerado; tentar ultrapassar o total.
+- Cancelar com motivo e conferir histórico preservado e exclusão dos totais de vendas/despesas.
+- Abrir a ficha do cliente e conferir a encomenda e a situação financeira.
+- Cadastrar foto e unidade do produto, mantendo o custo por unidade.
+- Usar Voltar/Avançar e recarregar uma página interna.
+- Criar backup, restaurar em outro banco e conferir os registros antes de qualquer troca do banco em uso.
