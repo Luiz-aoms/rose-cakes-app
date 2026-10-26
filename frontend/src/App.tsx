@@ -1,3 +1,6 @@
+import type { Produto, Cliente, Despesa, Venda } from './tipos'
+import { api } from './api'
+import { dinheiro, hoje, data } from './formatacao'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import './App.css'
@@ -5,22 +8,8 @@ import { CancelarRegistro } from './CancelarRegistro'
 import type { AlvoCancelamento } from './CancelarRegistro'
 import { Icone } from './Icone'
 import { useNavegacao } from './useNavegacao'
-type Produto = { id: number; nome: string; descricao: string; categoria: string; precoCusto: number; precoVenda: number; ativo: boolean }
-type Cliente = { id: number; nome: string; telefone: string; endereco: string; observacoes: string }
-type Despesa = { canceladoEm?: string; motivoCancelamento?: string; id: number; descricao: string; categoria: string; valor: number; dataDespesa: string }
-type Venda = { canceladoEm?: string; motivoCancelamento?: string; id: number; clienteNome: string; dataVenda: string; pagamento: string; total: number; custo: number; itens: { produtoNome: string; quantidade: number }[] }
 type Tela = 'Visão geral' | 'Produtos' | 'Clientes' | 'Vendas' | 'Despesas' | 'Relatórios' | 'Ajuda'
 const telas: Tela[] = ['Visão geral', 'Produtos', 'Clientes', 'Vendas', 'Despesas', 'Relatórios', 'Ajuda']
-const dinheiro = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-const hoje = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` }
-const data = (v: string) => new Date(v.slice(0,10)+'T12:00:00').toLocaleDateString('pt-BR')
-const base = import.meta.env.VITE_API_URL || '/api'
-async function api<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
-  const res = await fetch(base + path, { method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(15000) })
-  if (res.status >= 500) throw new Error("Serviço indisponível. Tente novamente em instantes.")
-  if (!res.ok) { const text = await res.text(); throw new Error(text.startsWith('{') ? 'Não foi possível concluir. Verifique os dados e tente novamente.' : text || 'Serviço indisponível.') }
-  return res.json()
-}
 export default function App() {
   const [dataAtual] = useState(() => new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' }))
   const [tela, setTela] = useNavegacao<Tela>({ 'Visão geral': 'resumo', Produtos: 'produtos', Clientes: 'clientes', Vendas: 'vendas', Despesas: 'despesas', Relatórios: 'relatorios', Ajuda: 'ajuda' }, 'Visão geral')
