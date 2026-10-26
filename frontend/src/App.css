@@ -121,3 +121,6 @@ form > .form-grid { margin-top: 22px; }
 .product-footer { gap: 12px; flex-wrap: wrap; }
 .payment-amount { display: block; margin-top: 5px; }
 .payment-list li { flex-wrap: wrap; align-items: center; }
+.edit-items section { padding: 14px; margin-bottom: 12px; background: #f8f5f6; border: 1px solid #e9e0e5; border-radius: 7px; }
+.edit-items section > label, .edit-item-values label { display: flex; flex-direction: column; gap: 8px; }
+.edit-item-values { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
