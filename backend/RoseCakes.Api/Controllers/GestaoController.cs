@@ -64,7 +64,7 @@ public class GestaoController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> CancelarVenda(int id, Cancelamento pedido)
     {
         if (string.IsNullOrWhiteSpace(pedido.Motivo) || pedido.Motivo.Trim().Length > 500) return BadRequest("Informe um motivo com até 500 caracteres.");
-        var venda = await db.Vendas.Include(v => v.Itens).FirstOrDefaultAsync(v => v.Id == id);
+        var venda = await db.Vendas.Include(v => v.Itens).Include(v => v.Recebimentos).FirstOrDefaultAsync(v => v.Id == id);
         if (venda is null) return NotFound();
         if (venda.CanceladoEm.HasValue) return BadRequest("Esta venda já foi cancelada.");
         venda.MotivoCancelamento = pedido.Motivo.Trim();
@@ -73,7 +73,7 @@ public class GestaoController(AppDbContext db) : ControllerBase
         return Ok(venda);
     }
     [HttpGet("vendas")]
-    public async Task<IActionResult> Vendas() => Ok(await db.Vendas.AsNoTracking().Include(v => v.Itens).OrderByDescending(v => v.DataVenda).ToListAsync());
+    public async Task<IActionResult> Vendas() => Ok(await db.Vendas.AsNoTracking().Include(v => v.Itens).Include(v => v.Recebimentos).OrderByDescending(v => v.DataVenda).ToListAsync());
     [HttpPost("vendas")]
     public async Task<IActionResult> CriarVenda(NovaVenda pedido)
     {
@@ -92,13 +92,32 @@ public class GestaoController(AppDbContext db) : ControllerBase
         venda.TipoEntrega = pedido.TipoEntrega;
         venda.EnderecoEntrega = pedido.EnderecoEntrega?.Trim();
         venda.Observacoes = pedido.Observacoes?.Trim();
+        var recebido = pedido.ValorRecebido ?? (pedido.DataEntrega.HasValue ? 0 : venda.Total);
+        if (recebido < 0 || recebido > venda.Total || decimal.Round(recebido, 2) != recebido) return BadRequest("O sinal deve estar entre zero e o total, com até duas casas decimais.");
+        venda.RecebimentosConferidos = true;
+        if (recebido > 0) venda.Recebimentos.Add(new Recebimento { Valor = recebido, DataPagamento = pedido.DataVenda, Forma = pedido.Pagamento });
         venda.ValorTotal = venda.Total; db.Vendas.Add(venda); await db.SaveChangesAsync(); return Ok(venda);
+    }
+    [HttpPost("vendas/{id:int}/recebimentos")]
+    public async Task<IActionResult> Receber(int id, NovoRecebimento pedido)
+    {
+        if (pedido.Valor <= 0 || decimal.Round(pedido.Valor, 2) != pedido.Valor || pedido.DataPagamento == default || !new[] { "Pix", "Dinheiro", "Cartão" }.Contains(pedido.Forma)) return BadRequest("Informe valor positivo com até duas casas decimais, data e forma de pagamento.");
+        await using var transaction = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+        var venda = await db.Vendas.Include(v => v.Itens).Include(v => v.Recebimentos).FirstOrDefaultAsync(v => v.Id == id);
+        if (venda is null) return NotFound();
+        if (venda.CanceladoEm.HasValue) return BadRequest("Não é possível receber em uma venda cancelada.");
+        if (pedido.Valor > venda.Saldo) return BadRequest("O pagamento supera o saldo. Atualize o registro e confira os recebimentos.");
+        venda.Recebimentos.Add(new Recebimento { Valor = pedido.Valor, DataPagamento = pedido.DataPagamento, Forma = pedido.Forma });
+        venda.RecebimentosConferidos = true;
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
+        return Ok(venda);
     }
     [HttpPut("vendas/{id:int}/etapa")]
     public async Task<IActionResult> MudarEtapa(int id, AlterarEtapa pedido)
     {
         if (!new[] { "Recebido", "Em produção", "Pronto", "Entregue" }.Contains(pedido.Etapa)) return BadRequest("Etapa inválida.");
-        var venda = await db.Vendas.Include(v => v.Itens).FirstOrDefaultAsync(v => v.Id == id);
+        var venda = await db.Vendas.Include(v => v.Itens).Include(v => v.Recebimentos).FirstOrDefaultAsync(v => v.Id == id);
         if (venda is null) return NotFound();
         if (!venda.DataEntrega.HasValue || venda.CanceladoEm.HasValue) return BadRequest("Apenas encomendas ativas podem mudar de etapa.");
         venda.Etapa = pedido.Etapa;
@@ -106,4 +125,5 @@ public class GestaoController(AppDbContext db) : ControllerBase
         return Ok(venda);
     }
 }
+
 

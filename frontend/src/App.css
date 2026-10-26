@@ -86,3 +86,5 @@ td { color: #665a61; }
 .order .deadline { color: #914c66; font-weight: 600; }
 .order select { font-size: 12px; }
 form > .form-grid { margin-top: 22px; }
+.payment-list { list-style: none; padding: 0; }
+.payment-list li { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; font-size: 12px; border-bottom: 1px solid #eee; }
