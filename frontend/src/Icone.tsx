@@ -6,8 +6,10 @@ const desenhos = [
   <><path d="M5 3h14v18l-3-2-4 2-4-2-3 2V3ZM8 8h8M8 12h8M8 16h4"/></>,
   <><path d="M4 5h16v14H4V5ZM4 9h16M8 14h3"/></>,
   <><path d="M4 3v18h17M8 17v-5M13 17V8M18 17V4"/></>,
+  <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M8 15h2M14 15h2"/></>,
   <><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 1 1 5 2c-2 1-2 2-2 3M12 17h.01"/></>,
 ]
 export function Icone({ indice }: Props) {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{desenhos[indice] ?? desenhos[0]}</svg>
 }
+
