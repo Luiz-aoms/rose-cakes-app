@@ -42,6 +42,15 @@ try {
     $quitada = Api "gestao/vendas/$($venda.id)/recebimentos" POST @{valor=80;dataPagamento='2026-10-27';forma='Dinheiro'}
     Conferir ($quitada.recebido -eq 120 -and $quitada.saldo -eq 0 -and $quitada.recebimentos.Count -eq 2) 'Pagamento posterior quita o saldo'
     Api "gestao/vendas/$($venda.id)/recebimentos" POST @{valor=1;dataPagamento='2026-10-27';forma='Pix'} 400 | Out-Null
+    $itemOriginal = $quitada.itens[0]
+    $edicao = @{clienteId=$cliente.id;dataVenda='2026-10-26';dataEntrega='2026-11-01T15:00:00';tipoEntrega='Entrega';enderecoEntrega='Endereço de teste';observacoes='Pedido alterado';itens=@(@{id=$itemOriginal.id;produtoId=$produto.id;quantidade=1;precoUnitario=100})}
+    Api "gestao/vendas/$($venda.id)" PUT $edicao 400 | Out-Null
+    $edicao.itens[0].precoUnitario = 120
+    $edicao.itens[0].quantidade = 2
+    $alterada = Api "gestao/vendas/$($venda.id)" PUT $edicao
+    Conferir ($alterada.total -eq 240 -and $alterada.custo -eq 80 -and $alterada.recebido -eq 120 -and $alterada.saldo -eq 120 -and $alterada.itens[0].produtoNome -eq 'Bolo de teste' -and $alterada.observacoes -eq 'Pedido alterado') 'Editar pedido preserva recebimentos, nome e custo históricos'
+    $edicao.itens[0].quantidade = 1
+    Api "gestao/vendas/$($venda.id)" PUT $edicao | Out-Null
     $pronta = Api "gestao/vendas/$($venda.id)/etapa" PUT @{etapa='Pronto'}
     Conferir ($pronta.etapa -eq 'Pronto') 'Etapa de produção atualizada'
     Api "gestao/vendas/$($venda.id)/cancelamento" POST @{motivo='Teste de cancelamento'} | Out-Null
@@ -68,6 +77,16 @@ try {
     Api "gestao/vendas/$($nova.id)/recebimentos/$recebimentoId" DELETE @{confirmar=$true} 204 | Out-Null
     $semRecebimento = @(Api 'gestao/vendas') | Where-Object id -eq $nova.id
     Conferir ($semRecebimento.recebido -eq 0 -and $semRecebimento.saldo -eq 150) 'Excluir recebimento incorreto volta a deixar a venda pendente'
+    $itemNova = $semRecebimento.itens[0]
+    $edicaoNova = @{clienteId=$cliente.id;dataVenda='2026-10-26';itens=@(@{id=$itemNova.id;produtoId=$produto.id;quantidade=1;precoUnitario=150},@{produtoId=$produto.id;quantidade=1;precoUnitario=70});observacoes='Venda alterada'}
+    $novaComItem = Api "gestao/vendas/$($nova.id)" PUT $edicaoNova
+    Conferir ($novaComItem.total -eq 220 -and $novaComItem.itens.Count -eq 2) 'Editar venda permite incluir item e alterar preço'
+    $itemAdicionado = $novaComItem.itens | Where-Object precoUnitario -eq 70
+    $edicaoNova.itens = @(@{id=$itemAdicionado.id;produtoId=$produto.id;quantidade=1;precoUnitario=70})
+    $novaSemItem = Api "gestao/vendas/$($nova.id)" PUT $edicaoNova
+    Conferir ($novaSemItem.total -eq 70 -and $novaSemItem.itens.Count -eq 1) 'Editar venda remove item e recalcula total'
+    $pagaParaExcluir = Api 'gestao/vendas' POST @{clienteId=$cliente.id;dataVenda='2026-10-26';pagamento='Pix';valorRecebido=10;itens=@(@{produtoId=$produto.id;quantidade=1})}
+    Api "gestao/vendas/$($pagaParaExcluir.id)" DELETE @{confirmar=$true} 204 | Out-Null
     Api "gestao/vendas/$($nova.id)" DELETE @{confirmar=$false} 400 | Out-Null
     Api "gestao/vendas/$($nova.id)" DELETE @{confirmar=$true} 204 | Out-Null
     Conferir (-not (@(Api 'gestao/vendas') | Where-Object id -eq $nova.id)) 'Exclusão confirmada remove a venda'
