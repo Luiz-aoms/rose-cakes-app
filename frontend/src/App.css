@@ -88,3 +88,6 @@ td { color: #665a61; }
 form > .form-grid { margin-top: 22px; }
 .payment-list { list-style: none; padding: 0; }
 .payment-list li { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; font-size: 12px; border-bottom: 1px solid #eee; }
+.history-title { margin-top: 24px; }
+.customer-history article { padding: 18px 0; border-bottom: 1px solid #eae4e7; }
+.customer-history p { margin-top: 8px; font-size: 12px; line-height: 1.7; }
