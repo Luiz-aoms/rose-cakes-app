@@ -5,7 +5,7 @@
 - Build de produção do frontend e lint concluídos.
 - Cinco testes automatizados de cálculos e CSV: exclusão de cancelamentos, distinção das datas de venda e recebimento, saldos antigos a conferir, períodos vazios, escape de fórmulas/aspas e recebimento de venda de outro período.
 - Compilação da API concluída.
-- `scripts/Testar-Integracao.ps1` executado com sucesso em bancos temporários exclusivos, removidos ao concluir.
+- Os fluxos de integração foram conferidos em bancos temporários separados. A automação PowerShell usada nessa validação não faz mais parte do projeto.
 - Fluxos de integração: cadastro de cliente e produto; encomenda com sinal; alteração de produto preservando histórico da venda; quitação posterior; rejeição de valor acima do saldo; etapa de produção; cancelamento; rejeição de pagamento/cancelamento duplicado em venda cancelada; edição e cancelamento de despesa; rejeição de edição da despesa cancelada; rejeição de imagem SVG; persistência de foto PNG e rendimento.
 - Backup com checksum e VERIFYONLY, seguido de restauração real em um segundo banco de teste. Conferidos recebimentos e foto após restaurar.
 - Banco local de uso: backup verificado antes da aplicação dos scripts 002 a 005. Não foram criados dados fictícios nesse banco.
