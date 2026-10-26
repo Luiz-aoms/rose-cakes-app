@@ -28,7 +28,7 @@ A proposta articula análise de sistemas, banco de dados, desenvolvimento e UI/U
 
 ## Limitações e continuidade
 
-Sem autenticação ou backup automatizado; sem estoque ou gestão completa de encomendas; sem cancelamento de vendas. A versão precisa de validação integrada com banco e validação com a parceira antes de operação real. Priorizar próximos passos conforme levantamento.
+Sem autenticação, estoque ou devoluções automatizadas. A versão local agora inclui encomendas, pagamentos parciais, cancelamentos e rotina manual de backup com restauração testada. A validação técnica integrada foi realizada; a validação de uso com a parceira continua pendente. Priorizar próximos passos conforme levantamento.
 
 ## Conteúdo proposto para banner
 

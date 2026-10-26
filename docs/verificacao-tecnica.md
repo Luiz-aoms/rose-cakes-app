@@ -1,11 +1,20 @@
-# Verificação técnica realizada
+# Verificação técnica — melhorias locais
 
-- Frontend: build de produção concluído; lint sem avisos.
-- Backend: compilação concluída em `backend/validation-build` para evitar conflito com executável já aberto.
-- SQL Server local: estrutura consultada e `database/001_gestao.sql` aplicado com sucesso, preservando tabelas anteriores.
-- API de validação: GET de produtos, clientes, vendas e despesas retornaram HTTP 200.
-- Validação: POST com venda sem itens, despesa negativa, produto com custo negativo e cliente em branco retornaram HTTP 400. Nenhum registro de teste foi criado.
-- Pendências: testar gravação completa e histórico de preços com banco de teste, verificar visualmente em dispositivos reais, executar sessão com a parceira e registrar sua avaliação.
-- O build aponta NU1902/NU1903 na dependência transitiva `System.Security.Cryptography.Pkcs` 9.0.11. Atualização e nova validação de dependências são necessárias antes de disponibilizar publicamente.
+## Verificações executadas
 
-Não foram realizadas entrevista, capacitação nem medição de impacto social. Os materiais de campo são roteiros para execução futura.
+- Build de produção do frontend e lint concluídos.
+- Quatro testes automatizados de cálculos e CSV: exclusão de cancelamentos, distinção das datas de venda e recebimento, saldos antigos a conferir, períodos vazios, escape de fórmulas/aspas e recebimento de venda de outro período.
+- Compilação da API concluída.
+- `scripts/Testar-Integracao.ps1` executado com sucesso em bancos temporários exclusivos, removidos ao concluir.
+- Fluxos de integração: cadastro de cliente e produto; encomenda com sinal; alteração de produto preservando histórico da venda; quitação posterior; rejeição de valor acima do saldo; etapa de produção; cancelamento; rejeição de pagamento/cancelamento duplicado em venda cancelada; edição e cancelamento de despesa; rejeição de edição da despesa cancelada; rejeição de imagem SVG; persistência de foto PNG e rendimento.
+- Backup com checksum e VERIFYONLY, seguido de restauração real em um segundo banco de teste. Conferidos recebimentos e foto após restaurar.
+- Banco local de uso: backup verificado antes da aplicação dos scripts 002 a 005. Não foram criados dados fictícios nesse banco.
+- Navegador: conferidos painel em desktop, menu hambúrguer, navegação até Pedidos e Vendas, formulário móvel e cartões em viewport de 375 px; Voltar e recarregamento mantiveram a página esperada.
+
+## Limitações
+
+A validação automatizada não substitui uma sessão com a empreendedora. Ainda não houve capacitação nem avaliação de impacto social. As conferências móveis usaram viewport de navegador, não aparelhos físicos de diferentes fabricantes.
+
+O build da API continua apontando os avisos NU1902/NU1903 na dependência transitiva `System.Security.Cryptography.Pkcs` 9.0.11. A atualização dessas dependências precisa de validação própria antes de hospedagem pública. Não há autenticação nesta etapa local.
+
+Consulte README para executar novamente as verificações e para entender as regras de receitas, recebimentos, custos e cancelamentos.
