@@ -24,5 +24,18 @@ public class ProdutosController(AppDbContext db) : ControllerBase
         atual.Nome = p.Nome.Trim(); atual.Descricao = p.Descricao; atual.Categoria = p.Categoria; atual.PrecoCusto = p.PrecoCusto; atual.PrecoVenda = p.PrecoVenda; atual.Ativo = p.Ativo;
         await db.SaveChangesAsync(); return Ok(atual);
     }
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Excluir(int id, ConfirmarExclusao pedido)
+    {
+        if (!pedido.Confirmar) return BadRequest("Confirme a exclusão definitiva.");
+        var registro = await db.Produtos.FindAsync(id);
+        if (registro is null) return NotFound();
+        if (await db.Set<ItemVenda>().AnyAsync(i => i.ProdutoId == id)) return Conflict("Este produto faz parte do histórico de vendas. Use a opção Produto ativo para inativá-lo, preservando os registros.");
+        db.Produtos.Remove(registro);
+        try { await db.SaveChangesAsync(); }
+        catch (DbUpdateException) { return Conflict("O produto passou a ter vínculos e não foi excluído. Atualize a lista."); }
+        return NoContent();
+    }
 }
+
 

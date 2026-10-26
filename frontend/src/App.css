@@ -112,3 +112,12 @@ form > .form-grid { margin-top: 22px; }
   .responsive-table .actions { gap: 24px; }
   .form-grid label:has(input[type=datetime-local]) { grid-column: 1 / -1; }
 }
+.danger { background: #a43437; border-color: #a43437; color: white; }
+.danger:hover:not(:disabled) { background: #85272a; }
+.danger-text { color: #a43437; }
+.deletion-warning { background: #fff1ed; border-left: 3px solid #b84b41; padding: 14px; margin: 18px 0; line-height: 1.7; font-size: 13px; }
+.confirmation-check { display: flex; align-items: flex-start; gap: 10px; line-height: 1.6; font-size: 13px; }
+.confirmation-check input { margin-top: 4px; accent-color: #a43437; }
+.product-footer { gap: 12px; flex-wrap: wrap; }
+.payment-amount { display: block; margin-top: 5px; }
+.payment-list li { flex-wrap: wrap; align-items: center; }
