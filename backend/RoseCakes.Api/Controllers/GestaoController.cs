@@ -39,6 +39,7 @@ public class GestaoController(AppDbContext db) : ControllerBase
 
         var atual = await db.Despesas.FindAsync(id);
         if (atual is null) return NotFound();
+        if (atual.CanceladoEm.HasValue) return BadRequest("Uma despesa cancelada não pode ser editada.");
 
         atual.Descricao = d.Descricao.Trim();
         atual.Categoria = d.Categoria?.Trim();
@@ -46,6 +47,30 @@ public class GestaoController(AppDbContext db) : ControllerBase
         atual.DataDespesa = d.DataDespesa;
         await db.SaveChangesAsync();
         return Ok(atual);
+    }
+    [HttpPost("despesas/{id:int}/cancelamento")]
+    public async Task<IActionResult> CancelarDespesa(int id, Cancelamento pedido)
+    {
+        if (string.IsNullOrWhiteSpace(pedido.Motivo) || pedido.Motivo.Trim().Length > 500) return BadRequest("Informe um motivo com até 500 caracteres.");
+        var despesa = await db.Despesas.FindAsync(id);
+        if (despesa is null) return NotFound();
+        if (despesa.CanceladoEm.HasValue) return BadRequest("Esta despesa já foi cancelada.");
+        despesa.MotivoCancelamento = pedido.Motivo.Trim();
+        despesa.CanceladoEm = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        return Ok(despesa);
+    }
+    [HttpPost("vendas/{id:int}/cancelamento")]
+    public async Task<IActionResult> CancelarVenda(int id, Cancelamento pedido)
+    {
+        if (string.IsNullOrWhiteSpace(pedido.Motivo) || pedido.Motivo.Trim().Length > 500) return BadRequest("Informe um motivo com até 500 caracteres.");
+        var venda = await db.Vendas.Include(v => v.Itens).FirstOrDefaultAsync(v => v.Id == id);
+        if (venda is null) return NotFound();
+        if (venda.CanceladoEm.HasValue) return BadRequest("Esta venda já foi cancelada.");
+        venda.MotivoCancelamento = pedido.Motivo.Trim();
+        venda.CanceladoEm = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        return Ok(venda);
     }
     [HttpGet("vendas")]
     public async Task<IActionResult> Vendas() => Ok(await db.Vendas.AsNoTracking().Include(v => v.Itens).OrderByDescending(v => v.DataVenda).ToListAsync());
