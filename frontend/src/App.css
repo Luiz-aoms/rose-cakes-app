@@ -102,3 +102,13 @@ form > .form-grid { margin-top: 22px; }
 .bar-track span { display: block; height: 100%; background: #a66c83; }
 .agenda-metrics { grid-template-columns: repeat(3,minmax(0,1fr)); }
 @media(max-width:650px) { .report-columns { grid-template-columns: 1fr; } .agenda-metrics { grid-template-columns: 1fr; } }
+@media(max-width:600px) {
+  .responsive-table, .responsive-table tbody { display: block; width: 100%; }
+  .responsive-table thead { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+  .responsive-table tbody tr { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); padding: 12px; border-bottom: 1px solid #e8dfe4; }
+  .responsive-table td { display: block; border: 0; padding: 8px; max-width: none; white-space: normal; }
+  .responsive-table td::before { content: attr(data-label); display: block; color: #80717b; text-transform: uppercase; letter-spacing: .5px; font-size: 9px; margin-bottom: 6px; font-weight: 500; }
+  .responsive-table td:first-child, .responsive-table td:last-child { grid-column: 1 / -1; }
+  .responsive-table .actions { gap: 24px; }
+  .form-grid label:has(input[type=datetime-local]) { grid-column: 1 / -1; }
+}
