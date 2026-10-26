@@ -14,6 +14,7 @@ function Api([string]$rota, [string]$metodo = 'GET', $dados = $null, [int]$esper
     if ($null -ne $dados) { $argsHttp.ContentType = 'application/json'; $argsHttp.Body = ($dados | ConvertTo-Json -Depth 12) }
     $res = Invoke-WebRequest @argsHttp
     if ([int]$res.StatusCode -ne $esperado) { throw "$metodo $rota retornou $($res.StatusCode): $($res.Content)" }
+    if ([int]$res.StatusCode -eq 204) { return }
     if ($res.Content.StartsWith('{') -or $res.Content.StartsWith('[')) { return $res.Content | ConvertFrom-Json }
 }
 function Conferir([bool]$condicao, [string]$mensagem) { if (-not $condicao) { throw $mensagem }; Write-Output "OK: $mensagem" }
@@ -56,6 +57,28 @@ try {
     $foto='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j6xkAAAAASUVORK5CYII='
     $comFoto=Api 'produtos' POST @{nome='Foto de teste';categoria='Nova categoria';precoCusto=1;precoVenda=2;foto=$foto;unidadeVenda='Fatia';rendimento=8}
     Conferir ($comFoto.foto -eq $foto -and $comFoto.rendimento -eq 8) 'Foto e dados do catálogo persistidos'
+    # Regressão: venda paga anterior não deve quitar automaticamente uma nova.
+    $nova = Api 'gestao/vendas' POST @{clienteId=$cliente.id;dataVenda='2026-10-26';pagamento='Pix';itens=@(@{produtoId=$produto.id;quantidade=1})}
+    Conferir ($nova.recebido -eq 0 -and $nova.saldo -eq 150 -and $nova.recebimentos.Count -eq 0) 'Nova venda após outra paga começa pendente'
+    $paga = Api "gestao/vendas/$($nova.id)/recebimentos" POST @{valor=150;dataPagamento='2026-10-26';forma='Pix'}
+    $recebimentoId = $paga.recebimentos[0].id
+    $corrigida = Api "gestao/vendas/$($nova.id)/recebimentos/$recebimentoId" PUT @{valor=30;dataPagamento='2026-10-26';forma='Dinheiro'}
+    Conferir ($corrigida.recebido -eq 30 -and $corrigida.saldo -eq 120) 'Alterar recebimento recalcula o saldo'
+    Api "gestao/vendas/$($nova.id)/recebimentos/$recebimentoId" DELETE @{confirmar=$false} 400 | Out-Null
+    Api "gestao/vendas/$($nova.id)/recebimentos/$recebimentoId" DELETE @{confirmar=$true} 204 | Out-Null
+    $semRecebimento = @(Api 'gestao/vendas') | Where-Object id -eq $nova.id
+    Conferir ($semRecebimento.recebido -eq 0 -and $semRecebimento.saldo -eq 150) 'Excluir recebimento incorreto volta a deixar a venda pendente'
+    Api "gestao/vendas/$($nova.id)" DELETE @{confirmar=$false} 400 | Out-Null
+    Api "gestao/vendas/$($nova.id)" DELETE @{confirmar=$true} 204 | Out-Null
+    Conferir (-not (@(Api 'gestao/vendas') | Where-Object id -eq $nova.id)) 'Exclusão confirmada remove a venda'
+    Api "produtos/$($produto.id)" DELETE @{confirmar=$true} 409 | Out-Null
+    Api "gestao/clientes/$($cliente.id)" DELETE @{confirmar=$true} 409 | Out-Null
+    Api "gestao/despesas/$($despesa.id)" DELETE @{confirmar=$true} 204 | Out-Null
+    $clienteAvulso = Api 'gestao/clientes' POST @{nome='Cliente sem vínculo';telefone='11999990001'}
+    Api "gestao/clientes/$($clienteAvulso.id)" DELETE @{confirmar=$true} 204 | Out-Null
+    $produtoAvulso = Api 'produtos' POST @{nome='Produto sem vínculo';categoria='Teste';precoCusto=1;precoVenda=2;ativo=$true}
+    Api "produtos/$($produtoAvulso.id)" DELETE @{confirmar=$true} 204 | Out-Null
+    Write-Output 'OK: exclusões exigem confirmação e respeitam os vínculos históricos.'
     & (Join-Path $PSScriptRoot 'Backup-Local.ps1') -Servidor $Servidor -Banco $banco
     # Restaurar o backup mais recente do banco de teste em um NOVO banco.
     $sqlRestore = @"
