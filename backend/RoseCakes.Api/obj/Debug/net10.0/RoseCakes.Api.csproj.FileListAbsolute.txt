@@ -174,3 +174,12 @@ C:\Users\Dell\rose-cakes-app\backend\validation-build\RoseCakes.Api.deps.json
 C:\Users\Dell\rose-cakes-app\backend\validation-build\RoseCakes.Api.runtimeconfig.json
 C:\Users\Dell\rose-cakes-app\backend\validation-build\RoseCakes.Api.dll
 C:\Users\Dell\rose-cakes-app\backend\validation-build\RoseCakes.Api.pdb
+C:\Users\Dell\rose-cakes-app\backend\RoseCakes.Api\obj\Debug\net10.0\RoseCakes.Api.sourcelink.json
+C:\Users\Dell\rose-cakes-app\.validation\expense-edit\appsettings.Development.json
+C:\Users\Dell\rose-cakes-app\.validation\expense-edit\appsettings.json
+C:\Users\Dell\rose-cakes-app\.validation\expense-edit\RoseCakes.Api.staticwebassets.endpoints.json
+C:\Users\Dell\rose-cakes-app\.validation\expense-edit\RoseCakes.Api.exe
+C:\Users\Dell\rose-cakes-app\.validation\expense-edit\RoseCakes.Api.deps.json
+C:\Users\Dell\rose-cakes-app\.validation\expense-edit\RoseCakes.Api.runtimeconfig.json
+C:\Users\Dell\rose-cakes-app\.validation\expense-edit\RoseCakes.Api.dll
+C:\Users\Dell\rose-cakes-app\.validation\expense-edit\RoseCakes.Api.pdb

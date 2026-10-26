@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RoseCakes.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4b87c7ed22fa14cc01268f007219d83f727c177e")]
 [assembly: System.Reflection.AssemblyProductAttribute("RoseCakes.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RoseCakes.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
