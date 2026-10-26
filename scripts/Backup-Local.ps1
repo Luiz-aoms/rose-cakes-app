@@ -13,7 +13,7 @@ IF RIGHT(@pasta, 1) NOT IN ('\', '/') SET @pasta = @pasta + '\';
 DECLARE @arquivo nvarchar(4000) = @pasta + N'$nomeArquivo';
 BACKUP DATABASE [$Banco] TO DISK = @arquivo WITH COPY_ONLY, CHECKSUM;
 RESTORE VERIFYONLY FROM DISK = @arquivo WITH CHECKSUM;
-SELECT @arquivo AS ArquivoBackupVerificado;
+PRINT @arquivo;
 "@
 & sqlcmd -S $Servidor -d master -E -C -b -Q $sql
 if ($LASTEXITCODE -ne 0) { throw 'O backup ou a verificação falhou. Confira as permissões do SQL Server.' }
