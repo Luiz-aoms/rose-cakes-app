@@ -21,7 +21,7 @@ export default function App() {
   const [menuAberto, setMenuAberto] = useState(false)
   const botaoMenu = useRef<HTMLButtonElement>(null)
   const [produtos, setProdutos] = useState<Produto[]>([]), [clientes, setClientes] = useState<Cliente[]>([]), [vendas, setVendas] = useState<Venda[]>([]), [despesas, setDespesas] = useState<Despesa[]>([])
-  const [loading, setLoading] = useState(true), [erro, setErro] = useState(''), [aviso, setAviso] = useState(''), [busca, setBusca] = useState(''), [categoria, setCategoria] = useState('Todas')
+  const [loading, setLoading] = useState(true), [falhas, setFalhas] = useState<string[]>([]), [aviso, setAviso] = useState(''), [busca, setBusca] = useState(''), [categoria, setCategoria] = useState('Todas')
   const [modal, setModal] = useState<Tela | null>(null), [editando, setEditando] = useState<Produto | Cliente | Despesa | null>(null), [salvando, setSalvando] = useState(false), [erroForm, setErroForm] = useState('')
   const [inicio, setInicio] = useState(hoje().slice(0,7)+'-01'), [fim, setFim] = useState(hoje())
   const [itens, setItens] = useState<{ produtoId: number; quantidade: number }[]>([{ produtoId: 0, quantidade: 1 }])
@@ -30,13 +30,19 @@ export default function App() {
   const [recebimento, setRecebimento] = useState<Venda | null>(null)
   const [cancelamento, setCancelamento] = useState<AlvoCancelamento | null>(null)
   const dialog = useRef<HTMLDialogElement>(null)
+  const dependencias: Record<Tela, string[]> = { 'Visão geral': ['vendas'], Produtos: ['produtos'], Clientes: ['clientes', 'vendas'], Vendas: ['vendas', 'clientes', 'produtos'], Pedidos: ['vendas', 'clientes', 'produtos'], Despesas: ['despesas'], Relatórios: ['vendas', 'despesas'], Ajuda: [] }
+  const falhasTela = falhas.filter(f => dependencias[tela].includes(f))
+  const erro = falhasTela.length ? `Não foi possível carregar: ${falhasTela.join(', ')}. Verifique a API e o banco local.` : ''
   async function carregar() {
-    setLoading(true); setErro('')
-    try {
-      const [p,c,v,d] = await Promise.all([api<Produto[]>('/produtos'), api<Cliente[]>('/gestao/clientes'), api<Venda[]>('/gestao/vendas'), api<Despesa[]>('/gestao/despesas')])
-      setProdutos(p); setClientes(c); setVendas(v); setDespesas(d)
-    } catch { setErro('Não foi possível conectar ao sistema. Verifique se a API e o banco de dados estão disponíveis e tente novamente.') }
-    finally { setLoading(false) }
+    setLoading(true)
+    const resultados = await Promise.allSettled([
+      api<Produto[]>('/produtos').then(setProdutos),
+      api<Cliente[]>('/gestao/clientes').then(setClientes),
+      api<Venda[]>('/gestao/vendas').then(setVendas),
+      api<Despesa[]>('/gestao/despesas').then(setDespesas),
+    ])
+    setFalhas(['produtos', 'clientes', 'vendas', 'despesas'].filter((_,i)=>resultados[i].status==='rejected'))
+    setLoading(false)
   }
   useEffect(() => { void Promise.resolve().then(carregar) }, [])
   useEffect(() => { if (modal) dialog.current?.showModal(); else dialog.current?.close() }, [modal])
@@ -74,6 +80,7 @@ export default function App() {
   const tabelaVendas = (lista: Venda[]) => <div className="table-scroll"><table><thead><tr><th>Venda / cliente</th><th>Data</th><th>Itens</th><th>Pagamento</th><th>Total</th><th>Situação / ações</th></tr></thead><tbody>{lista.map(v => <tr key={v.id}><td><strong>#{String(v.id).padStart(3,'0')}</strong><span>{v.clienteNome}</span></td><td>{data(v.dataVenda)}</td><td>{v.itens.map(i => `${i.quantidade}× ${i.produtoNome}`).join(', ')}</td><td><span className="tag">{v.pagamento}</span></td><td className="money">{dinheiro(v.total)}</td><td><button className="text-button" onClick={()=>setRecebimento(v)}>{v.recebimentosConferidos ? (v.saldo > 0 ? `Saldo: ${dinheiro(v.saldo)}` : 'Pago') : 'Conferir recebimentos'}</button><br/>{v.canceladoEm ? <span className="cancelled" title={v.motivoCancelamento}>Cancelada: {v.motivoCancelamento}</span> : <button className="text-button" onClick={()=>setCancelamento({id:v.id,tipo:'vendas',descricao:`Venda #${v.id}`})}>Cancelar</button>}</td></tr>)}</tbody></table>{lista.length === 0 && <div className="empty">Nenhuma venda neste período. Registre sua primeira venda para começar.</div>}</div>
   return <div className="app"><aside className="sidebar" onKeyDown={e => { if (e.key === 'Escape' && menuAberto) { setMenuAberto(false); botaoMenu.current?.focus() } }}><div className="sidebar-header"><a className="brand" href="#" onClick={e => { e.preventDefault(); navegar('Visão geral') }}><div className="brand-icon">R<span>✧</span></div><div>Rose Cakes<small>& FATIAS</small></div></a><button ref={botaoMenu} type="button" className="menu-toggle" aria-expanded={menuAberto} aria-controls="navegacao-principal" aria-label={menuAberto ? 'Fechar menu de navegação' : 'Abrir menu de navegação'} onClick={() => setMenuAberto(aberto => !aberto)}><span className={menuAberto ? 'hamburger is-open' : 'hamburger'} aria-hidden="true"><span/><span/><span/></span></button></div><p className="nav-label">MEU NEGÓCIO</p><nav id="navegacao-principal" className={menuAberto ? 'navigation is-open' : 'navigation'} aria-label="Navegação principal">{telas.map((t,i) => <button key={t} aria-current={tela===t ? 'page' : undefined} className={tela===t ? 'nav active' : 'nav'} onClick={() => navegar(t)}><Icone indice={i}/>{t}</button>)}</nav><div className="profile"><b>R</b><div>Rose Cakes e Fatias<small>Gestão do negócio</small></div></div></aside>
     <div className="workspace"><header className="topbar"><span>Meu negócio <span className="slash">/</span> <strong>{tela}</strong></span><span className="today">{dataAtual}</span></header><main><div className="heading"><div><p className="eyebrow">ROSE CAKES & FATIAS</p><h1>{tela === 'Visão geral' ? 'Resumo do negócio' : tela}</h1><p className="subtitle">{{'Visão geral':'Acompanhe os números e cuide de cada detalhe da sua confeitaria.',Produtos:'Consulte produtos, custos e preços de venda.',Clientes:'Contatos, preferências e histórico de atendimento.',Vendas:'Registre cada pedido e acompanhe suas vendas.',Despesas:'Organize os gastos e entenda para onde vai o dinheiro.',Relatórios:'Transforme seus registros em decisões para o negócio.',Pedidos:'Organize a produção, as retiradas e as entregas.',Ajuda:'Um passo de cada vez para uma gestão mais simples.'}[tela]}</p></div>{['Produtos','Clientes','Vendas','Despesas'].includes(tela) ? <button className="primary" disabled={loading || !!erro} onClick={() => abrir(tela)}>+ {tela==='Produtos'?'Novo produto':tela==='Clientes'?'Novo cliente':tela==='Vendas'?'Nova venda':'Nova despesa'}</button> : tela==='Visão geral' && <button className="primary" disabled={loading || !!erro} onClick={() => abrir('Vendas')}>+ Registrar venda</button>}</div>
+    {falhas.length > 0 && !erro && <div className="notice" role="status">Módulos indisponíveis: {falhas.join(', ')}. As demais telas continuam acessíveis.<button onClick={()=>void carregar()} disabled={loading}>Tentar novamente</button></div>}
     {aviso && <div className="notice" role="status">{aviso}<button aria-label="Fechar mensagem" onClick={() => setAviso('')}>×</button></div>}
     {erro ? <div className="error" role="alert"><h2>Vamos restabelecer a conexão</h2><p>{erro}</p><button onClick={() => void carregar()}>Tentar novamente</button></div> : loading ? <div className="empty" role="status">Carregando seus registros…</div> : <>
     {['Relatórios','Vendas','Despesas'].includes(tela) && <div className="period"><span>Período de análise</span><label>De <input aria-label="Data inicial" type="date" required value={inicio} max={fim} onChange={e => { if(e.target.value) setInicio(e.target.value) }}/></label><label>Até <input aria-label="Data final" type="date" required value={fim} min={inicio} onChange={e => { if(e.target.value) setFim(e.target.value) }}/></label></div>}
