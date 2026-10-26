@@ -92,7 +92,7 @@ public class GestaoController(AppDbContext db) : ControllerBase
         venda.TipoEntrega = pedido.TipoEntrega;
         venda.EnderecoEntrega = pedido.EnderecoEntrega?.Trim();
         venda.Observacoes = pedido.Observacoes?.Trim();
-        var recebido = pedido.ValorRecebido ?? (pedido.DataEntrega.HasValue ? 0 : venda.Total);
+        var recebido = pedido.ValorRecebido ?? 0;
         if (recebido < 0 || recebido > venda.Total || decimal.Round(recebido, 2) != recebido) return BadRequest("O sinal deve estar entre zero e o total, com até duas casas decimais.");
         venda.RecebimentosConferidos = true;
         if (recebido > 0) venda.Recebimentos.Add(new Recebimento { Valor = recebido, DataPagamento = pedido.DataVenda, Forma = pedido.Pagamento });
@@ -125,5 +125,6 @@ public class GestaoController(AppDbContext db) : ControllerBase
         return Ok(venda);
     }
 }
+
 
 
