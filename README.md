@@ -4,7 +4,7 @@ Sistema local de gestão em React/TypeScript, ASP.NET Core e SQL Server.
 
 ## Preparar e executar
 
-1. Requisitos: Node.js 24 (usado na validação), SDK .NET 10, SQL Server e `sqlcmd` para os scripts operacionais.
+1. Requisitos: Node.js 24 (usado na validação), SDK .NET 10 e SQL Server.
 2. Configure `ConnectionStrings:DefaultConnection` em `backend/RoseCakes.Api/appsettings.json` para a sua instância. Credenciais devem ficar em variável de ambiente, sem serem enviadas ao Git.
 3. Crie `RoseCakesDB` se necessário. Faça backup se já houver dados. Execute os arquivos de `database/` **em ordem numérica, de 001 a 005**, no mesmo banco. Os scripts são aditivos e podem ser reaplicados no esquema esperado. Estruturas diferentes precisam de revisão.
 4. Inicie a API: `dotnet run --project backend/RoseCakes.Api --launch-profile http`.
@@ -37,19 +37,18 @@ Vendas anteriores ao novo controle de recebimentos ficam **a conferir**. Não pr
 
 ## Verificações
 
-```powershell
+```text
 npm --prefix frontend run build
 npm --prefix frontend run lint
 npm --prefix frontend test
 dotnet build backend/RoseCakes.Api --no-restore -o backend/validation-build
-.\scripts\Testar-Integracao.ps1
 ```
 
-O teste de integração precisa de PowerShell 7, SQL Server com permissão para criar/remover bancos de teste, backup e restauração, e da API compilada no caminho acima. Ele cria bancos com nomes aleatórios, valida os fluxos e os remove ao terminar. Não grava no banco de uso real. Backups de teste ficam na pasta de backups da instância SQL Server. A porta padrão é 5119; use `-Porta` para escolher outra livre.
+Para conferir os fluxos pelo sistema, siga o roteiro de `docs/validacao-e-capacitacao.md` usando um banco separado dos dados reais.
 
 ## Backup
 
-Execute `.\scripts\Backup-Local.ps1` para criar e verificar uma cópia completa na pasta padrão do SQL Server. Consulte `docs/backup-local.md` para recuperar em outro banco com segurança. O CSV não substitui o backup.
+O backup pode ser feito manualmente pelo SQL Server Management Studio. Consulte `docs/backup-local.md` para criar uma cópia e recuperar em outro banco. O CSV não substitui o backup.
 
 ## Limites atuais
 
