@@ -1,3 +1,4 @@
+import { gerarCsv } from './exportacao'
 import { Agenda } from './Agenda'
 import { Relatorios } from './Relatorios'
 import { FichaCliente } from './FichaCliente'
@@ -73,8 +74,7 @@ export default function App() {
   const filtrados = produtos.filter(p => encontrados(p.nome) && (categoria === 'Todas' || p.categoria === categoria))
   const categorias = ['Fatias', 'Bolo Inteiro', 'Doces', 'Bebidas', ...produtos.map(p => p.categoria).filter(Boolean)].filter((v,i,a) => a.indexOf(v) === i)
   function exportar() {
-    const linhas = [['Tipo','Data','Descrição','Receita','Custo de produtos','Despesa'], ...vendasAtivas.map(v => ['Venda',data(v.dataVenda),`Venda #${v.id} - ${v.clienteNome}`,v.total.toFixed(2),v.custo.toFixed(2),'']), ...despesasAtivas.map(d => ['Despesa',data(d.dataDespesa),d.descricao,'','',d.valor.toFixed(2)])]
-    const csv = '\uFEFF'+linhas.map(l => l.map(c => { const s = String(c); return '"'+(/^[=+@\-\t\r]/.test(s) ? "'" : '')+s.replaceAll('"','""')+'"' }).join(';')).join('\r\n')
+    const csv = gerarCsv(vendas, despesas, inicio, fim)
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); const a = document.createElement('a'); a.href=url; a.download=`rose-cakes-${inicio}-${fim}.csv`; a.click(); URL.revokeObjectURL(url)
   }
   const tabelaVendas = (lista: Venda[]) => <div className="table-scroll"><table className="responsive-table"><thead><tr><th>Venda / cliente</th><th>Data</th><th>Itens</th><th>Pagamento</th><th>Total</th><th>Situação / ações</th></tr></thead><tbody>{lista.map(v => <tr key={v.id}><td data-label="Venda / cliente"><strong>#{String(v.id).padStart(3,'0')}</strong><span>{v.clienteNome}</span></td><td data-label="Data">{data(v.dataVenda)}</td><td data-label="Itens">{v.itens.map(i => `${i.quantidade}× ${i.produtoNome}`).join(', ')}</td><td data-label="Pagamento"><span className="tag">{v.pagamento}</span></td><td data-label="Total" className="money">{dinheiro(v.total)}</td><td data-label="Situação / ações"><button className="text-button" onClick={()=>setRecebimento(v)}>{v.recebimentosConferidos ? (v.saldo > 0 ? `Saldo: ${dinheiro(v.saldo)}` : 'Pago') : 'Conferir recebimentos'}</button><br/>{v.canceladoEm ? <span className="cancelled" title={v.motivoCancelamento}>Cancelada: {v.motivoCancelamento}</span> : <button className="text-button" onClick={()=>setCancelamento({id:v.id,tipo:'vendas',descricao:`Venda #${v.id}`})}>Cancelar</button>}</td></tr>)}</tbody></table>{lista.length === 0 && <div className="empty">Nenhuma venda neste período. Registre sua primeira venda para começar.</div>}</div>
