@@ -19,12 +19,12 @@ Em uma hospedagem diferente, configure `VITE_API_URL` no build para a URL da API
 - Cadastro e edição de clientes, telefone, endereço e observações.
 - Vendas com vários itens, consumidor avulso ou cliente, data e pagamento.
 - Preços, custos e nomes preservados no histórico da venda.
-- Despesas por data, categoria e valor.
+- Cadastro e edição de despesas por descrição, data, categoria e valor.
 - Painel e relatório por período com receita, custo, despesas e resultado estimado.
 - Exportação CSV dos registros do período, compatível com planilhas.
 - Interface responsiva, formulários com rótulos, diálogo acessível e guia de primeiros passos.
 
-A forma de pagamento registra o meio usado; não integra pagamentos nem confirma recebimento. Despesas são registros de gastos, sem contas a pagar. Não há controle de estoque, autenticação, recuperação de senha nem edição/cancelamento de vendas e despesas nesta versão. Restrinja o protótipo ao ambiente local até implementar controle de acesso para hospedagem pública. CSV é um relatório, não um backup completo do banco.
+A forma de pagamento registra o meio usado; não integra pagamentos nem confirma recebimento. Despesas são registros de gastos, sem contas a pagar. Não há controle de estoque, autenticação, recuperação de senha nem edição de vendas ou cancelamento de vendas e despesas nesta versão. Restrinja o protótipo ao ambiente local até implementar controle de acesso para hospedagem pública. CSV é um relatório, não um backup completo do banco.
 
 ## Validação técnica
 

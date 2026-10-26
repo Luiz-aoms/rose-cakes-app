@@ -31,6 +31,22 @@ public class GestaoController(AppDbContext db) : ControllerBase
         if (string.IsNullOrWhiteSpace(d.Descricao) || d.Valor <= 0 || d.Valor > 99999999 || d.DataDespesa == default) return BadRequest("Informe descrição, data e valor positivo.");
         d.Id = 0; db.Despesas.Add(d); await db.SaveChangesAsync(); return Ok(d);
     }
+    [HttpPut("despesas/{id:int}")]
+    public async Task<IActionResult> EditarDespesa(int id, Despesa d)
+    {
+        if (string.IsNullOrWhiteSpace(d.Descricao) || d.Valor <= 0 || d.Valor > 99999999 || d.DataDespesa == default)
+            return BadRequest("Informe descrição, data e valor positivo.");
+
+        var atual = await db.Despesas.FindAsync(id);
+        if (atual is null) return NotFound();
+
+        atual.Descricao = d.Descricao.Trim();
+        atual.Categoria = d.Categoria?.Trim();
+        atual.Valor = d.Valor;
+        atual.DataDespesa = d.DataDespesa;
+        await db.SaveChangesAsync();
+        return Ok(atual);
+    }
     [HttpGet("vendas")]
     public async Task<IActionResult> Vendas() => Ok(await db.Vendas.AsNoTracking().Include(v => v.Itens).OrderByDescending(v => v.DataVenda).ToListAsync());
     [HttpPost("vendas")]
