@@ -1,0 +1,30 @@
+import { useEffect, useRef, useState } from 'react'
+import type { FormEvent } from 'react'
+import type { Cliente, Produto, Venda } from './tipos'
+import { api } from './api'
+import { data, dinheiro, hoje } from './formatacao'
+export function Pedidos({ vendas, clientes, produtos, atualizar }: { vendas: Venda[]; clientes: Cliente[]; produtos: Produto[]; atualizar: () => Promise<void> }) {
+  const [aberto, setAberto] = useState(false), [salvando, setSalvando] = useState(false), [erro, setErro] = useState(''), [etapa, setEtapa] = useState('Em aberto')
+  const [entrega, setEntrega] = useState('Retirada'), [itens, setItens] = useState([{ produtoId: 0, quantidade: 1 }])
+  const dialog = useRef<HTMLDialogElement>(null)
+  useEffect(() => { if (aberto) dialog.current?.showModal(); else dialog.current?.close() }, [aberto])
+  const total = itens.reduce((s, i) => s + (produtos.find(p => p.id === i.produtoId)?.precoVenda ?? 0) * i.quantidade, 0)
+  async function salvar(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault(); setSalvando(true); setErro('')
+    const f = new FormData(e.currentTarget)
+    try {
+      await api('/gestao/vendas', 'POST', { clienteId: Number(f.get('cliente')), dataVenda: hoje(), pagamento: 'Pix', itens, dataEntrega: f.get('prazo'), tipoEntrega: entrega, enderecoEntrega: f.get('endereco'), observacoes: f.get('observacoes') })
+      setAberto(false); await atualizar()
+    } catch(e) { setErro(e instanceof Error ? e.message : 'Não foi possível salvar.') }
+    finally { setSalvando(false) }
+  }
+  async function mudar(v: Venda, valor: string) {
+    setSalvando(true); setErro('')
+    try { await api(`/gestao/vendas/${v.id}/etapa`, 'PUT', { etapa: valor }); await atualizar() }
+    catch(e) { setErro(e instanceof Error ? e.message : 'Não foi possível atualizar.') }
+    finally { setSalvando(false) }
+  }
+  const pedidos = vendas.filter(v => v.dataEntrega).filter(v => etapa === 'Todos' || (etapa === 'Cancelados' ? !!v.canceladoEm : !v.canceladoEm && (etapa === 'Em aberto' ? v.etapa !== 'Entregue' : v.etapa === etapa))).sort((a,b) => a.dataEntrega!.localeCompare(b.dataEntrega!))
+  return <><div className="toolbar"><select aria-label="Situação dos pedidos" value={etapa} onChange={e=>setEtapa(e.target.value)}>{['Em aberto','Recebido','Em produção','Pronto','Entregue','Cancelados','Todos'].map(s=><option key={s}>{s}</option>)}</select><button className="primary" onClick={()=>{setErro('');setItens([{produtoId:0,quantidade:1}]);setEntrega('Retirada');setAberto(true)}}>+ Nova encomenda</button></div>{erro && !aberto && <p className="form-error" role="alert">{erro}</p>}<div className="order-grid">{pedidos.map(v=><article className="panel order" key={v.id}><div className="row"><strong>Pedido #{v.id}</strong><span className="tag">{v.canceladoEm ? 'Cancelado' : v.etapa}</span></div><h2>{v.clienteNome}</h2><p className="deadline">{data(v.dataEntrega!)} às {v.dataEntrega!.slice(11,16)} · {v.tipoEntrega}</p>{v.enderecoEntrega && <p>{v.enderecoEntrega}</p>}<ul>{v.itens.map((i,n)=><li key={n}>{i.quantidade} × {i.produtoNome}</li>)}</ul>{v.observacoes && <p className="order-note">{v.observacoes}</p>}<div className="row"><strong>{dinheiro(v.total)}</strong>{!v.canceladoEm && <select aria-label={`Etapa do pedido ${v.id}`} disabled={salvando} value={v.etapa} onChange={e=>void mudar(v,e.target.value)}>{['Recebido','Em produção','Pronto','Entregue'].map(s=><option key={s}>{s}</option>)}</select>}</div>{v.canceladoEm && <p className="cancelled">{v.motivoCancelamento}</p>}</article>)}</div>{!pedidos.length && <div className="empty">Nenhuma encomenda nesta situação.</div>}
+  <dialog ref={dialog} aria-labelledby="pedido-titulo" onCancel={e=>{if(salvando)e.preventDefault();else setAberto(false)}}><form key={String(aberto)} onSubmit={salvar}><h2 id="pedido-titulo">Nova encomenda</h2><div className="form-grid"><label className="full">Cliente<select name="cliente" required defaultValue=""><option value="">Selecione…</option>{clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}</select></label><label>Data e horário<input name="prazo" type="datetime-local" required/></label><label>Modalidade<select value={entrega} onChange={e=>setEntrega(e.target.value)}><option>Retirada</option><option>Entrega</option></select></label>{entrega==='Entrega' && <label className="full">Endereço de entrega<input name="endereco" required maxLength={300}/></label>}<div className="full">{itens.map((i,n)=><div className="sale-item" key={n}><label>Produto<select required value={i.produtoId||''} onChange={e=>setItens(itens.map((item,j)=>j===n?{...item,produtoId:Number(e.target.value)}:item))}><option value="">Selecione…</option>{produtos.filter(p=>p.ativo).map(p=><option key={p.id} value={p.id}>{p.nome} · {dinheiro(p.precoVenda)}</option>)}</select></label><label>Quantidade<input type="number" required min="1" max="10000" step="1" value={i.quantidade||''} onChange={e=>setItens(itens.map((item,j)=>j===n?{...item,quantidade:Number(e.target.value)}:item))}/></label><button type="button" aria-label={`Remover item ${n+1}`} disabled={itens.length===1} onClick={()=>setItens(itens.filter((_,j)=>j!==n))}>×</button></div>)}<button className="text-button" type="button" onClick={()=>setItens([...itens,{produtoId:0,quantidade:1}])}>+ Adicionar item</button></div><label className="full">Detalhes da encomenda<textarea name="observacoes" placeholder="Sabor, decoração, mensagem no bolo…" maxLength={1000}/></label></div><div className="sale-total">Total<strong>{dinheiro(total)}</strong></div>{erro && <p className="form-error" role="alert">{erro}</p>}<div className="modal-actions"><button type="button" disabled={salvando} onClick={()=>setAberto(false)}>Voltar</button><button className="primary" disabled={salvando}>{salvando?'Salvando…':'Salvar encomenda'}</button></div></form></dialog></>
+}

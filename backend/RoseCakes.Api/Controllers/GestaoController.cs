@@ -77,6 +77,8 @@ public class GestaoController(AppDbContext db) : ControllerBase
     [HttpPost("vendas")]
     public async Task<IActionResult> CriarVenda(NovaVenda pedido)
     {
+        if (pedido.DataEntrega.HasValue && (!pedido.ClienteId.HasValue || !new[] { "Retirada", "Entrega" }.Contains(pedido.TipoEntrega) || (pedido.TipoEntrega == "Entrega" && string.IsNullOrWhiteSpace(pedido.EnderecoEntrega))))
+            return BadRequest("Encomendas precisam de cliente, prazo e modalidade; para entrega, informe o endereço.");
         if (pedido.Itens is null || pedido.Itens.Count == 0 || pedido.Itens.Any(i => i.Quantidade <= 0 || i.Quantidade > 10000) || pedido.DataVenda == default || !new[] { "Pix", "Dinheiro", "Cartão" }.Contains(pedido.Pagamento)) return BadRequest("Verifique os itens, a data e a forma de pagamento.");
         var cliente = pedido.ClienteId.HasValue ? await db.Clientes.FindAsync(pedido.ClienteId.Value) : null;
         if (pedido.ClienteId.HasValue && cliente is null) return BadRequest("Cliente não encontrado.");
@@ -85,7 +87,23 @@ public class GestaoController(AppDbContext db) : ControllerBase
         if (produtos.Count != ids.Count) return BadRequest("Um dos produtos não está disponível.");
         var venda = new Venda { ClienteId = cliente?.Id, ClienteNome = cliente?.Nome ?? "Consumidor avulso", DataVenda = pedido.DataVenda, Pagamento = pedido.Pagamento,
             Itens = pedido.Itens.Select(i => new ItemVenda { ProdutoId = i.ProdutoId, ProdutoNome = produtos[i.ProdutoId].Nome, Quantidade = i.Quantidade, PrecoUnitario = produtos[i.ProdutoId].PrecoVenda, CustoUnitario = produtos[i.ProdutoId].PrecoCusto }).ToList() };
+        venda.DataEntrega = pedido.DataEntrega;
+        venda.Etapa = pedido.DataEntrega.HasValue ? "Recebido" : "Entregue";
+        venda.TipoEntrega = pedido.TipoEntrega;
+        venda.EnderecoEntrega = pedido.EnderecoEntrega?.Trim();
+        venda.Observacoes = pedido.Observacoes?.Trim();
         venda.ValorTotal = venda.Total; db.Vendas.Add(venda); await db.SaveChangesAsync(); return Ok(venda);
+    }
+    [HttpPut("vendas/{id:int}/etapa")]
+    public async Task<IActionResult> MudarEtapa(int id, AlterarEtapa pedido)
+    {
+        if (!new[] { "Recebido", "Em produção", "Pronto", "Entregue" }.Contains(pedido.Etapa)) return BadRequest("Etapa inválida.");
+        var venda = await db.Vendas.Include(v => v.Itens).FirstOrDefaultAsync(v => v.Id == id);
+        if (venda is null) return NotFound();
+        if (!venda.DataEntrega.HasValue || venda.CanceladoEm.HasValue) return BadRequest("Apenas encomendas ativas podem mudar de etapa.");
+        venda.Etapa = pedido.Etapa;
+        await db.SaveChangesAsync();
+        return Ok(venda);
     }
 }
 
