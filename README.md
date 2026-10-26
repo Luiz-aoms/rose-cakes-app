@@ -18,9 +18,9 @@ Para conferir uma segunda instância da API, o Vite aceita `API_PROXY_TARGET`, p
 - **Visão geral:** entregas pendentes ordenadas pelo prazo, recebimentos de hoje, saldo conferido e últimas vendas.
 - **Produtos:** nome, categoria livre com sugestões, unidade de venda, rendimento informativo, custo unitário, preço, foto e inativação. Fotos PNG/JPEG/WebP de até 750 KB são guardadas no banco, incluídas no backup.
 - **Clientes:** cadastro e edição, contatos, endereço, observações e ficha com histórico de compras/encomendas.
-- **Vendas:** registro imediato, pagamento integral por padrão, consulta de recebimentos e cancelamento com motivo.
+- **Vendas:** registro imediato, pagamento pendente por padrão, valor recebido informado explicitamente, edição de cliente/data/itens/preços e cancelamento com motivo.
 - **Pedidos:** encomenda com cliente, data/horário, retirada ou entrega com endereço, itens, detalhes e sinal. Etapas: Recebido, Em produção, Pronto e Entregue. A mudança de etapa não altera a situação financeira.
-- **Recebimentos:** registre pagamentos posteriores até o saldo. O histórico registra data, valor e forma. Não integra bancos nem processa Pix ou cartão.
+- **Recebimentos:** registre pagamentos posteriores até o saldo. É possível alterar um lançamento incorreto ou excluí-lo com confirmação; o saldo e a situação de pagamento são recalculados. O histórico registra data, valor e forma. Não integra bancos nem processa Pix ou cartão.
 - **Despesas:** criar, editar e cancelar com motivo. Registros cancelados ficam no histórico e não podem ser editados.
 - **Relatórios:** período, receita, custo, despesas, resultado estimado, ticket médio, ranking de produtos, gastos por categoria, vendas por dia e recebimentos.
 - **CSV:** exporta registros válidos de vendas/despesas e recebimentos pela data do pagamento. Recebimentos de vendas canceladas ficam identificados para conferir eventuais devoluções.
@@ -31,7 +31,7 @@ O menu hambúrguer é mantido no celular, as listas principais se adaptam em car
 
 Receita e custo seguem a data do registro da venda ou encomenda; recebimentos seguem a data do pagamento. Resultado estimado = receita − custo histórico − despesas adicionais. Não lance novamente em despesas os custos já incluídos no custo unitário.
 
-Cancelamentos não apagam o histórico e não fazem devoluções financeiras. Os recebimentos permanecem registrados; confira e realize devoluções fora do sistema. Cancelamentos não podem ser desfeitos nesta versão.
+Cancelamentos não apagam o histórico e não fazem devoluções financeiras. Os recebimentos permanecem registrados; confira e realize devoluções fora do sistema. Cancelamentos não podem ser desfeitos nesta versão. **Excluir** é diferente: apaga definitivamente o registro após a confirmação. Ao excluir uma venda ou pedido, os itens e recebimentos também são apagados. Clientes e produtos com vínculos históricos não podem ser excluídos; produtos podem ser inativados.
 
 Vendas anteriores ao novo controle de recebimentos ficam **a conferir**. Não presumimos pagamentos antigos: confira comprovantes e registre os valores efetivamente recebidos. Até a conferência, elas não entram no saldo consolidado. Custos de vendas anteriores à primeira atualização podem estar zerados porque não havia histórico; resultados desses períodos podem ficar superestimados. O sistema não substitui contabilidade.
 
@@ -53,7 +53,7 @@ Execute `.\scripts\Backup-Local.ps1` para criar e verificar uma cópia completa 
 
 ## Limites atuais
 
-Uso local, sem autenticação, controle de estoque, apuração fiscal ou devoluções automatizadas. Venda imediata registra pagamento integral; pagamentos parciais são registrados pelas encomendas. O rendimento do produto não calcula ingredientes automaticamente. A edição de itens de uma venda ou encomenda já salva não está disponível: cancele com motivo e registre novamente. Nenhuma atualização é enviada automaticamente ao GitHub.
+Uso local, sem autenticação, controle de estoque, apuração fiscal ou devoluções automatizadas. Vendas e encomendas começam pendentes quando nenhum valor recebido é informado. Escolher Pix, dinheiro ou cartão não confirma recebimento. Pagamentos podem ser parciais ou integrais em ambos os casos. O rendimento do produto não calcula ingredientes automaticamente. Vendas e pedidos ativos podem ser editados, preservando os recebimentos e o nome/custo histórico dos itens existentes. Novos itens usam o custo atual do produto. O novo total não pode ficar menor que o já recebido. Registros cancelados não podem ser editados; podem ser excluídos após confirmação. Nenhuma atualização é enviada automaticamente ao GitHub.
 
 ## Extensão universitária
 
@@ -63,3 +63,9 @@ Uso local, sem autenticação, controle de estoque, apuração fiscal ou devolu�
 `docs/verificacao-tecnica.md`: evidências técnicas e limitações da validação.
 
 Entrevista, capacitação e medição de impacto social ainda dependem das atividades reais com a parceira.
+
+## Corrigir uma venda que ficou paga por engano
+
+Abra **Vendas → Ver recebimentos** na linha desejada. Use **Alterar** para corrigir valor, data ou forma. Se o recebimento inteiro foi lançado por engano, use **Excluir recebimento**, confira o aviso e confirme. O saldo volta a ficar em aberto e a situação é recalculada. Valores de registros antigos não são apagados automaticamente, pois o sistema não consegue distinguir sozinho pagamentos reais de lançamentos indevidos.
+
+Nos formulários, **Fechar sem salvar** apenas abandona a edição; **Cancelar registro/pedido** mantém o histórico e o retira dos totais; **Excluir** apaga definitivamente após confirmação. Os comandos não movimentam dinheiro nem realizam devoluções.
